@@ -30,8 +30,8 @@ int string_is_number(char input[]) {
 
 
 int main() {
-
-	int len_local_array = 99;
+	int num_from_server = 99;
+	int len_local_array = num_from_server;
 	char local_array[len_local_array][999]; //len_local_array is the number of entries, each of them are 999 characters long
 	char encryption_status[len_local_array];
 	//initializing the array to some dummy values
@@ -75,7 +75,7 @@ int main() {
 			fprintf(stderr, "Incorrect entry for querying or updating question.\n");
 			
 			if (feof(stdin)) { //if there's still elements in stdin that need to be read
-			while (fgets(buffer, sizeof buffer, stdin) != NULL && buffer[0] != '\n') {} //keeps reading until it gets a newline
+				while (fgets(buffer, sizeof buffer, stdin) != NULL && buffer[0] != '\n') {} //keeps reading until it gets a newline
 			}
 
 			printf("\nRestarting...\n");
@@ -83,7 +83,6 @@ int main() {
 		}
 		
 		printf("Received %c.\n", Q_or_U);
-		
 		
 		
 		
@@ -100,8 +99,9 @@ int main() {
 			
 			
 			//would be great to replace this with fgets, because a sequence of events that can break all these scanf statements is if they hit enter, then type something
-			printf("Which entry would you like to query? (1 to num_from_server): ");
-			rc = scanf("%s", entry);
+			printf("Which entry would you like to query? (1 to %d): ", num_from_server);
+			fgets(inbuff, 200, stdin);
+			rc = sscanf(inbuff, "%s", entry);
 			
 			if (strcmp(entry, "\n") != 0) { //if the entry is empty, string_is_number has nothing to work with
 			//string is not empty
@@ -110,7 +110,11 @@ int main() {
 				if (rc != 1 || rc2 == 0) {
 					fprintf(stderr, "Failed to get correct entry\n\n");
 					printf("\nrestarting\n");
-					while (fgets(buffer, sizeof buffer, stdin) != NULL && buffer[0] != '\n') {} //keeps reading until it gets a newline
+					
+					if (feof(stdin)) { //if there's still elements in stdin that need to be read
+						while (fgets(buffer, sizeof buffer, stdin) != NULL && buffer[0] != '\n') {} //keeps reading until it gets a newline
+					}
+					
 					continue;
 				}
 				else {printf("string is a number\n");}
@@ -120,7 +124,11 @@ int main() {
 				if (rc != 1 ) {
 					fprintf(stderr, "Failed to get correct entry\n\n");
 					printf("\nrestarting\n");
-					while (fgets(buffer, sizeof buffer, stdin) != NULL && buffer[0] != '\n') {} //keeps reading until it gets a newline
+					
+					if (feof(stdin)) { //if there's still elements in stdin that need to be read
+						while (fgets(buffer, sizeof buffer, stdin) != NULL && buffer[0] != '\n') {} //keeps reading until it gets a newline
+					}
+					
 					continue;
 				}
 			}
@@ -130,8 +138,11 @@ int main() {
 			
 			num_entry = atoi(entry);
 			
-			while (fgets(buffer, sizeof buffer, stdin) != NULL && buffer[0] != '\n') {} //keeps reading until it gets a newline
+			if (feof(stdin)) { //if there's still elements in stdin that need to be read
+				while (fgets(buffer, sizeof buffer, stdin) != NULL && buffer[0] != '\n') {} //keeps reading until it gets a newline
+			}
 			
+			//construct the response
 			sprintf(to_send, "%c%lld%c", token, num_entry, newline);
 		}
 		
@@ -151,8 +162,9 @@ int main() {
 			//server response
 			token = '@';
 			
-			printf("Which entry would you like to update? (1 to num_from_server): ");
-			rc = scanf("%s", entry);
+			printf("Which entry would you like to update? (1 to %d): ", num_from_server);
+			fgets(inbuff, 200, stdin);
+			rc = sscanf(inbuff, "%s", entry);
 			
 			if (strcmp(entry, "\n") != 0) { //if the entry is empty, string_is_number has nothing to work with
 			//string is not empty
@@ -161,7 +173,11 @@ int main() {
 				if (rc != 1 || rc2 == 0) {
 					fprintf(stderr, "Failed to get correct entry\n\n");
 					printf("\nrestarting\n");
-					while (fgets(buffer, sizeof buffer, stdin) != NULL && buffer[0] != '\n') {} //keeps reading until it gets a newline
+					
+					if (feof(stdin)) { //if there's still elements in stdin that need to be read
+						while (fgets(buffer, sizeof buffer, stdin) != NULL && buffer[0] != '\n') {} //keeps reading until it gets a newline
+					}
+					
 					continue;
 				}
 				else {printf("string is a number\n");}
@@ -171,7 +187,11 @@ int main() {
 				if (rc != 1 ) {
 					fprintf(stderr, "Failed to get correct entry\n\n");
 					printf("\nrestarting\n");
-					while (fgets(buffer, sizeof buffer, stdin) != NULL && buffer[0] != '\n') {} //keeps reading until it gets a newline
+					
+					if (feof(stdin)) { //if there's still elements in stdin that need to be read
+						while (fgets(buffer, sizeof buffer, stdin) != NULL && buffer[0] != '\n') {} //keeps reading until it gets a newline
+					}
+					
 					continue;
 				}
 			}
@@ -179,10 +199,11 @@ int main() {
 			
 			printf("received %s\n", entry);
 			
-			while (fgets(buffer, sizeof buffer, stdin) != NULL && buffer[0] != '\n') {} //keeps reading until it gets a newline
-			
 			num_entry = atoi(entry);
 			
+			if (feof(stdin)) { //if there's still elements in stdin that need to be read
+				while (fgets(buffer, sizeof buffer, stdin) != NULL && buffer[0] != '\n') {} //keeps reading until it gets a newline
+			}
 			
 			////////////////////////SHOULD MAKE IT SO THAT IF MESSAGE IS JUST A NEWLINE, IT BECOMES EMPTY
 			printf("What would you like your message to be? (will accept up to 999 characters the rest are truncated): ");
@@ -192,21 +213,26 @@ int main() {
 			if (rc != 1) {
 				fprintf(stderr, "Failed to receive message\n\n");
 				printf("\nrestarting\n");
+				if (feof(stdin)) { //if there's still elements in stdin that need to be read
+					while (fgets(buffer, sizeof buffer, stdin) != NULL && buffer[0] != '\n') {} //keeps reading until it gets a newline
+				}
 				continue;
 			}
 			
 			printf("message received: %s", message);	
 			
 			if (feof(stdin)) { //if there's still elements in stdin that need to be read
-			while (fgets(buffer, sizeof buffer, stdin) != NULL && buffer[0] != '\n') {} //keeps reading until it gets a newline
+				while (fgets(buffer, sizeof buffer, stdin) != NULL && buffer[0] != '\n') {} //keeps reading until it gets a newline
 			}	
 		
 			printf("Would you like to encrypt that message? (y/n): ");
+			//when implemented exactly as above with the Q_or_U, it doesn't ever succeed
 			rc = scanf("%s", &E_or_P);
 			
 			if (rc != 1  || (strcmp(&E_or_P, "y") != 0 && strcmp(&E_or_P, "n") != 0 && strcmp(&E_or_P, "Y") != 0 && strcmp(&E_or_P, "N") != 0 )) {
 				fprintf(stderr, "Failed to get correct encryption answer\n\n");
 				printf("\nrestarting\n");
+				while (fgets(buffer, sizeof buffer, stdin) != NULL && buffer[0] != '\n') {} //keeps reading until it gets a newline
 				continue;
 			}
 
