@@ -53,7 +53,7 @@ int main() {
 	char entry[99];
 	char token;
 	char to_send[1050];
-	
+	char inbuff[200];
 	
 	
 	int rc;
@@ -67,13 +67,16 @@ int main() {
 		QUERY_FLAG = 0;
 		
 		printf("\nWould you like to query or update? (q/u): ");
-		rc = scanf("%c", &Q_or_U);
+		fgets(inbuff, 200, stdin);
+		
+		rc = sscanf(inbuff, "%c", &Q_or_U);
 		
 		if (rc != 1 || (strcmp(&Q_or_U, "q") != 0 && strcmp(&Q_or_U, "Q") != 0 && strcmp(&Q_or_U, "u") != 0 && strcmp(&Q_or_U, "U") != 0 )) { //if it didn't get any input
 			fprintf(stderr, "Incorrect entry for querying or updating question.\n");
 			
-			//THIS WILL CAUSE IT TO HANG IF THERE'S NOTHING STILL IN THE BUFFER, but when I use feof(stdin) to check if there's anything left here, it always says no
+			if (feof(stdin)) { //if there's still elements in stdin that need to be read
 			while (fgets(buffer, sizeof buffer, stdin) != NULL && buffer[0] != '\n') {} //keeps reading until it gets a newline
+			}
 
 			printf("\nRestarting...\n");
 			continue;
@@ -81,7 +84,6 @@ int main() {
 		
 		printf("Received %c.\n", Q_or_U);
 		
-		while (fgets(buffer, sizeof buffer, stdin) != NULL && buffer[0] != '\n') {} //keeps reading until it gets a newline
 		
 		
 		
