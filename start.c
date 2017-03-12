@@ -226,8 +226,8 @@ int main() {
 			}	
 		
 			printf("Would you like to encrypt that message? (y/n): ");
-			//when implemented exactly as above with the Q_or_U, it doesn't ever succeed
-			rc = scanf("%s", &E_or_P);
+			//when implemented exactly as above with fgets for Q_or_U, it doesn't ever succeed
+			rc = scanf("%c", &E_or_P);
 			
 			if (rc != 1  || (strcmp(&E_or_P, "y") != 0 && strcmp(&E_or_P, "n") != 0 && strcmp(&E_or_P, "Y") != 0 && strcmp(&E_or_P, "N") != 0 )) {
 				fprintf(stderr, "Failed to get correct encryption answer\n\n");
