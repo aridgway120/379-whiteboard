@@ -244,6 +244,8 @@ int main() {
 			mode = 'p';
 			if (strcmp(&E_or_P, "y") == 0 || strcmp(&E_or_P, "Y") == 0) {
 				mode = 'e';
+				printf("\n\n\nWARNING!!!!!!! STRLEN IS NOT TO BE USED ON ENCRYPTED MESSAGES, ONCE YOU FIX THAT, REMOVE THIS MESSAGE AND NOT A SECOND SOONER\n\n\n");
+				
 				//message = encrypt(message);
 			}
 			
@@ -329,8 +331,10 @@ int main() {
 				back_mode = encryption_status[ssentry];
 				strcpy(back_message, local_array[ssentry]);
 				back_message_len = strlen(back_message);
-					
 				
+				if (ssmode == 'e') {
+					printf("\n\n\nWARNING!!!!!!! STRLEN IS NOT TO BE USED ON ENCRYPTED MESSAGES, ONCE YOU FIX THAT, REMOVE THIS MESSAGE AND NOT A SECOND SOONER\n\n\n");
+				}
 				sprintf(back_response, "%c%lld%c%d%c%s%c", back_token, back_entry, back_mode, back_message_len, back_newline, back_message, back_newline);
 				
 			}
