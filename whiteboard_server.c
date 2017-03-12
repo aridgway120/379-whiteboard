@@ -4,6 +4,7 @@
 
 #include <ctype.h>
 #include <math.h>
+#include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -15,6 +16,14 @@
 #define LOAD 2
 
 #define ENTRY_SIZE 512
+
+#define N_SOCKS 20
+#define FREE -2
+
+// compile as: gcc whiteboard_server.c -o wbs379 -pthread
+// call with: wbs379 portnumber {-f statefile | -n entries}
+char* MAX_ENTRIES;
+char** whiteboard;
 
 int isNumber(char arg[]) {
     for (int i=0; i<strlen(arg); i++) {
@@ -46,6 +55,25 @@ int getMode(char arg[]) {
     return -1;
 }
 
+int clientHandler(void * arg)
+{
+    int snew = *((int *) arg);
+
+    char* CONNECTION_MSG = malloc(33 + (int)log10(atoi(MAX_ENTRIES)));
+    strcpy(CONNECTION_MSG, "CMPUT379 Whiteboard Server v0\n");
+    strcat(CONNECTION_MSG, MAX_ENTRIES);
+    strcat(CONNECTION_MSG, "\n");
+
+    int bytes_written = write(snew, CONNECTION_MSG, strlen(CONNECTION_MSG));
+
+    
+    close(snew);
+
+    fprintf(stderr, "Socket closed.\n");
+
+    return 0;
+}
+
 int main(int argc, char* argv[])
 {
     int PORT_NO = 0000;
@@ -75,10 +103,11 @@ int main(int argc, char* argv[])
             fprintf(stderr, "FATAL ERROR: Invalid number of entries.\n");
             return -1;
         }
-        int MAX_ENTRIES = atoi(argv[3]);
+        MAX_ENTRIES = calloc(12, sizeof(char));
+        strcpy(MAX_ENTRIES, argv[3]);
 
-        char** whiteboard = malloc(MAX_ENTRIES * sizeof(char*));
-        for (int i=0; i < MAX_ENTRIES; i++) {
+        whiteboard = malloc(atoi(MAX_ENTRIES) * sizeof(char*));
+        for (int i=0; i < atoi(MAX_ENTRIES); i++) {
             whiteboard[i] = malloc(ENTRY_SIZE);
             strcpy(whiteboard[i], "!12e0\n\n");
         }
@@ -87,16 +116,17 @@ int main(int argc, char* argv[])
         int a;
     }
 
-    char MAX_ENTRIES_STR[] = "20";
-    int MAX_ENTRIES = atoi(MAX_ENTRIES_STR);
+    // Whiteboard format: !EFN\nMESSAGE\n
+    // where E=entry no., N = entry len, MESSAGE = text entry,
+    //  F = format encrypted (c) or plaintext (p) or error (e)
+    // eg: !12p30\nthisisaresponsetodemothelength\n
+
     int n_entries = 0;
-    char* CONNECTION_MSG = malloc(33 + (int)log10(MAX_ENTRIES));
-    strcpy(CONNECTION_MSG, "CMPUT379 Whiteboard Server v0\n");
-    strcat(CONNECTION_MSG, MAX_ENTRIES_STR);
-    strcat(CONNECTION_MSG, "\n");
 
     // Startup procedures
-    int sock, snew, bind_result, clientlength;
+    int sock, snew[N_SOCKS], bind_result, clientlength;
+
+    for (int i=0; i < N_SOCKS; i++) { snew[i] = -1; }
 
     struct sockaddr_in master, client;
 
@@ -116,18 +146,24 @@ int main(int argc, char* argv[])
         exit(1);
     }
 
-    listen(sock, 20);
-
+    listen(sock, N_SOCKS);
+    int ind = 0;
     // Ongoing processes
     while(1) {
         clientlength = sizeof(client);
-        snew = accept(sock, (struct sockaddr*)&client, (socklen_t*)&clientlength);
-        if (snew < 0) {
-            perror("Server: Accept failed.");
-            exit(1);
-        }
-        int bytes_written = write(snew, CONNECTION_MSG, strlen(CONNECTION_MSG));
-        close(snew);
+        int ind;
         
+        snew[ind] = accept(sock, (struct sockaddr*)&client, (socklen_t*)&clientlength);
+        if (snew[ind] < 0) {
+            perror("Server: Accept failed.");
+            //exit(1);
+        }
+        else {
+            fprintf(stderr, "Client diverted to socket %d.\n", ind);
+            clientHandler((void*) &(snew[ind]));
+            ind++;
+            if (ind >= 20) { ind -= 20; }
+        }
+        //
     }
 }
