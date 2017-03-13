@@ -30,6 +30,7 @@
 char* MAX_ENTRIES;
 char** whiteboard;
 pthread_mutex_t * mutex;
+pthread_t * threads;
 
 int isNumber(char arg[]) {
     for (int i=0; i<strlen(arg); i++) {
@@ -96,7 +97,7 @@ int getEntryLen(char buffer[BUFF_SIZE], int entry_no)
     return getEntryNumber(buffer, ind);
 }
 
-int clientHandler(void * arg)
+void * clientHandler(void * arg)
 {
     int snew = *((int *) arg);
     char* buffer = malloc(BUFF_SIZE);
@@ -234,7 +235,7 @@ int clientHandler(void * arg)
 
     fprintf(stderr, "Socket closed.\n");
 
-    return 0;
+    return (void *) 0;
 }
 
 int main(int argc, char* argv[])
@@ -293,6 +294,8 @@ int main(int argc, char* argv[])
     // Startup procedures
     int sock, snew[N_SOCKS], bind_result, clientlength;
 
+    threads = calloc(100, sizeof(pthread_t));
+
     for (int i=0; i < N_SOCKS; i++) { snew[i] = -1; }
 
     struct sockaddr_in master, client;
@@ -314,20 +317,23 @@ int main(int argc, char* argv[])
     }
 
     listen(sock, N_SOCKS);
-    int ind = 0;
+    int ind = 0, t_ind = 0;
     // Ongoing processes
     while(1) {
         clientlength = sizeof(client);
-        int ind;
         
         snew[ind] = accept(sock, (struct sockaddr*)&client, (socklen_t*)&clientlength);
         if (snew[ind] < 0) {
             perror("Server: Accept failed.");
-            //exit(1);
         }
         else {
             fprintf(stderr, "Client diverted to socket %d.\n", ind);
-            clientHandler((void*) &(snew[ind]));
+            pthread_create(&(threads[t_ind]), NULL, clientHandler, (void *) &(snew[ind]) );
+            t_ind++;
+            if (t_ind >= sizeof(*threads)/sizeof(pthread_t)) {
+                threads = realloc(threads, sizeof(*threads) + 100*sizeof(pthread_t));
+            }
+            //clientHandler((void*) &(snew[ind]));
             ind++;
             if (ind >= N_SOCKS) { ind -= N_SOCKS; }
         }
