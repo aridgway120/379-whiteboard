@@ -9,7 +9,7 @@
 #include <ctype.h>
 #include <math.h>
 
-#define	 MY_PORT  1275
+#define	 MY_PORT  1277
 
 
 
@@ -428,7 +428,7 @@ int main()
 			
 			if (response[0] == '!') {
 				//catch ![num_entry][mode][length]\n but for some reason, doesn't catch length properly, even though I do this for literally every other one
-				sscanf(response, "%c%lld%c%%d%c", &retoken, &renum_entry, &remode, &relen, &newline);
+				sscanf(response, "%c%lld%c%d%c", &retoken, &renum_entry, &remode, &relen, &newline);
 				int enSize = (renum_entry<=0) ? 1 : ((int) log10(renum_entry) + 1);
             	// missing entry length error
             	if (len == -1) {
