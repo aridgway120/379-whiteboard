@@ -101,18 +101,20 @@ int getEntryLen(char buffer[BUFF_SIZE], int entry_no)
 void * clientHandler(void * arg)
 {
     int snew = *((int *) arg);
-    char* buffer = malloc(BUFF_SIZE);
-    char* response = malloc(BUFF_SIZE);
+    char* buffer = malloc(BUFF_SIZE); ////
+    char* response = malloc(BUFF_SIZE); ////
     bzero(buffer, BUFF_SIZE);
 
     int bytes_written, bytes_read=1;
 
-    char* CONNECTION_MSG = malloc(33 + (int)log10(atoi(MAX_ENTRIES)));
+    char* CONNECTION_MSG = malloc(33 + (int)log10(atoi(MAX_ENTRIES))); // freed
     strcpy(CONNECTION_MSG, "CMPUT379 Whiteboard Server v0\n");
     strcat(CONNECTION_MSG, MAX_ENTRIES);
     strcat(CONNECTION_MSG, "\n");
 
     bytes_written = write(snew, CONNECTION_MSG, strlen(CONNECTION_MSG));
+
+    free(CONNECTION_MSG);
 
     while (1) {
         bzero(buffer, BUFF_SIZE);
@@ -194,14 +196,14 @@ void * clientHandler(void * arg)
             char * temp = malloc(enSize);       // entry number
             sprintf(temp, "%d", entryNumber);
             strcat(new_entry, temp);
-            free(temp);
+            free(temp); // freed here
 
             strcat(new_entry, &encryption_mode); // encryption mode
 
             temp = malloc(elSize);              // entry length
             sprintf(temp, "%d", entryLen);
             strcat(new_entry, temp);
-            free(temp);
+            free(temp); // freed here
 
             strcat(new_entry, "\n");            // add newline
             strncat(new_entry, buffer+entry_start, entryLen); // add entry text
@@ -240,12 +242,24 @@ void * clientHandler(void * arg)
 
 void orderly_exit()
 {
+    // save whiteboard in file
     FILE *f = fopen("whiteboard.all", "w");
     for (int i=0; i<atoi(MAX_ENTRIES); i++) {
         fprintf(f, "%s", whiteboard[i]);
     }
     fclose(f);
     fprintf(stderr, "Whiteboard successfully saved.\n");
+
+    // free global vars
+    free(threads);
+    for (int i=0; i<atoi(MAX_ENTRIES); i++) {
+        free(whiteboard[i]);
+        pthread_mutex_destroy(&(mutex[i]));
+    }
+    free(whiteboard);
+    free(mutex);
+    
+    free(MAX_ENTRIES);
     exit(0);
 }
 
@@ -297,11 +311,11 @@ int main(int argc, char* argv[])
             fprintf(stderr, "FATAL ERROR: Invalid number of entries.\n");
             return -1;
         }
-        MAX_ENTRIES = calloc(12, sizeof(char));
+        MAX_ENTRIES = calloc(12, sizeof(char)); // freed in orderly_exit
         strcpy(MAX_ENTRIES, argv[3]);
 
-        whiteboard = malloc(atoi(MAX_ENTRIES) * sizeof(char*));
-        mutex = malloc(atoi(MAX_ENTRIES) * sizeof(pthread_mutex_t));
+        whiteboard = malloc(atoi(MAX_ENTRIES) * sizeof(char*)); // freed in orderly_exit
+        mutex = malloc(atoi(MAX_ENTRIES) * sizeof(pthread_mutex_t)); // freed in orderly_exit
 
         for (int i=0; i < atoi(MAX_ENTRIES); i++) {
             whiteboard[i] = malloc(ENTRY_SIZE);
@@ -316,7 +330,7 @@ int main(int argc, char* argv[])
     else {
         FILE *f  = fopen(argv[3], "r");
         char line[BUFF_SIZE];
-        MAX_ENTRIES = calloc(12, sizeof(char));
+        MAX_ENTRIES = calloc(12, sizeof(char)); // freed in orderly_exit
         int rownum = 0, temp;
         while (fgets(line, BUFF_SIZE, f) != NULL) {
             temp = getEntryNumber(line, 1);
@@ -326,8 +340,8 @@ int main(int argc, char* argv[])
         sprintf(MAX_ENTRIES, "%d", rownum);
         
         // create empty whiteboard
-        whiteboard = malloc(atoi(MAX_ENTRIES) * sizeof(char*));
-        mutex = malloc(atoi(MAX_ENTRIES) * sizeof(pthread_mutex_t));
+        whiteboard = malloc(atoi(MAX_ENTRIES) * sizeof(char*)); // freed in orderly_exit
+        mutex = malloc(atoi(MAX_ENTRIES) * sizeof(pthread_mutex_t)); // freed in orderly_exit
 
         for (int i=0; i < atoi(MAX_ENTRIES); i++) {
             whiteboard[i] = malloc(ENTRY_SIZE);
@@ -360,7 +374,7 @@ int main(int argc, char* argv[])
     // Startup procedures
     int sock, snew[N_SOCKS], bind_result, clientlength;
 
-    threads = calloc(10, sizeof(pthread_t));
+    threads = calloc(10, sizeof(pthread_t)); // freed in orderly_exit
 
     for (int i=0; i < N_SOCKS; i++) { snew[i] = -1; }
 
