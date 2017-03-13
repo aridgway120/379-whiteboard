@@ -111,8 +111,28 @@ int string_is_number(char input[]) {
 }
 
 
-int main()
+int main(int argc, char* argv[])
 {
+	
+	if (argc >= 4) {
+		perror ("No keyfile support available\n");
+		exit (1);
+	}
+	char hostname[99];
+	int portnumber;
+	if (argc == 3) {
+		
+		strcpy(hostname, argv[1]);
+		portnumber = atoi(argv[2]);
+	}
+	else {
+		printf("Wrong number of arguments\nCall with hostname portnumber\n");
+		exit(1);
+	}
+		
+		
+		
+		
 	int	s, number;
 	int bytes_read, bytes_written;
 
@@ -125,7 +145,7 @@ int main()
 
 	struct	hostent		*host;
 
-	host = gethostbyname ("127.0.0.1");
+	host = gethostbyname (hostname);
 
 	if (host == NULL) {
 		perror ("Client: cannot get host description");
@@ -143,7 +163,7 @@ int main()
 	bzero (&server, sizeof (server));
 	bcopy (host->h_addr, & (server.sin_addr), host->h_length);
 	server.sin_family = host->h_addrtype;
-	server.sin_port = htons (MY_PORT);
+	server.sin_port = htons (portnumber);
 
 	if (connect (s, (struct sockaddr*) & server, sizeof (server))) {
 		perror ("Client: cannot connect to server");
