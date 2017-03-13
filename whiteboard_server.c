@@ -255,7 +255,7 @@ int main(int argc, char* argv[])
     // pid_t pid = fork();
     // if (pid<0) { fprintf(stderr, "Failed to fork.\n"); exit(1); }
     // printf("pid of server daemon %d\n", pid);
-    fprintf(stderr, "Server PID: %ld\n", (long int)getpid());
+    fprintf(stderr, "\n\nServer PID:\n%ld\n\n", (long int)getpid());
     // exit(0);
     // umask(0);
     // pid_t sid = setsid();

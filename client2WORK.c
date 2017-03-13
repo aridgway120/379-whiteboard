@@ -431,7 +431,7 @@ int main()
 				sscanf(response, "%c%lld%c%d%c", &retoken, &renum_entry, &remode, &relen, &newline);
 				int enSize = (renum_entry<=0) ? 1 : ((int) log10(renum_entry) + 1);
             	// missing entry length error
-            	if (len == -1) {
+            	if (relen == -1) {
                 	fprintf(stderr, "Fatal Error! Entry length missing!\n");
                 	break;
             	}
