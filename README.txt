@@ -7,3 +7,6 @@ From here, update is the only one with any prompts left.  It will ask you to ent
 Finally, you will be asked if you want to encrypt the message, though we didn't get around to implementing the cryptography, so all this will do is send "c" in place of "p" for the mode.
 
 That's all you need to know!
+
+NOTE:
+client compiles with two warnings, this is because I'm reading %999[^\n] into a char array, which works fine, but the compiler issues warnings anyways.
