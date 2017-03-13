@@ -1,8 +1,10 @@
-#include <sys/types.h>
 #include <sys/socket.h>
+#include <sys/stat.h>
+#include <sys/types.h>
 #include <netinet/in.h>
 
 #include <ctype.h>
+#include <fcntl.h>
 #include <math.h>
 #include <pthread.h>
 #include <stdio.h>
@@ -27,6 +29,7 @@
 // call with: wbs379 portnumber {-f statefile | -n entries}
 char* MAX_ENTRIES;
 char** whiteboard;
+pthread_mutex_t * mutex;
 
 int isNumber(char arg[]) {
     for (int i=0; i<strlen(arg); i++) {
@@ -115,26 +118,68 @@ int clientHandler(void * arg)
         bytes_read = read(snew, buffer, BUFF_SIZE-1);
         fprintf(stderr, "%d bytes read.\n", bytes_read);
         if (bytes_read <= 0) { break; }
-        fprintf(stderr, "Got this:\n%sfrom client.\n", buffer);
+        fprintf(stderr, "Got this:\n\"%s\"from client.\n", buffer);
 
         int entryNumber = getEntryNumber(buffer, 1);
-        int entryLen = getEntryLen(buffer, entryNumber);
+        int enSize = (entryNumber==0) ? 1 : ((int) log10(entryNumber) + 1);
         
         if (buffer[0] == '?') {
             // Query
-            fprintf(stderr, "Query to entry %d; len = %d\n", entryNumber, entryLen);
+            fprintf(stderr, "Query to entry %d\n", entryNumber);
+
         }
         else if (buffer[0] == '@') {
             // Update
             // format: @[entry]p[msglen]\nmessage\n
-            fprintf(stderr, "Update to entry %d; len = %d\n", entryNumber, entryLen);
-            // entrylen = messagelen + 4(!p\n\n) + 3 + (int)(log10(entrylen)) + (int)(log10(entryno))
-            int entry_len = strlen(buffer);
-            fprintf(stderr, "buffer len = %d\n", entry_len);
-            //char* entry = malloc();
+            int entryLen = getEntryLen(buffer, entryNumber);
+            int elSize = (entryLen==0) ? 1 : ((int) log10(entryLen) + 1);
+            char encryption_mode[1] = "p";
+
+            fprintf(stderr, "Update to entry %d; %d digits\nlen = %d; %d digits\n", entryNumber, enSize, entryLen, elSize);
+            
+
+            int buff_len = strlen(buffer);
+            fprintf(stderr, "buffer len = %d\n", buff_len);
+
+            int entry_start = 1+enSize+1+elSize+1; // index at which the entry text starts
+
+            // Create new entry string
+            char new_entry[ENTRY_SIZE];         // empty string
+            bzero(new_entry, ENTRY_SIZE);
+
+            strcpy(new_entry, "!");             // response flag
+
+            char * temp = malloc(enSize);       // entry number
+            sprintf(temp, "%d", entryNumber);
+            strcat(new_entry, temp);
+            free(temp);
+
+            strcat(new_entry, encryption_mode); // encryption mode
+
+            temp = malloc(elSize);              // entry length
+            sprintf(temp, "%d", entryLen);
+            strcat(new_entry, temp);
+            free(temp);
+
+            strcat(new_entry, "\n");            // add newline
+            strncat(new_entry, buffer+entry_start, entryLen); // add entry text
+            strcat(new_entry, "\n");            // add newline
+
+            fprintf(stderr, "new entry: \"%s\"\n", new_entry);
+            // update whiteboard
+            pthread_mutex_lock( &(mutex[entryNumber]) );
+            bzero(whiteboard[entryNumber], ENTRY_SIZE);
+            strcpy(whiteboard[entryNumber], new_entry);
+            pthread_mutex_unlock( &(mutex[entryNumber]) );
+
+            // send empty error message
+            bzero(buffer, BUFF_SIZE);
+            sprintf(buffer, "!%de0\n\n", entryNumber);
+
+            write(snew, buffer, strlen(buffer));
         }
         else {
-            fprintf(stderr, "Unknown to entry %d; len = %d\n", entryNumber, entryLen);
+            fprintf(stderr, "Unknown to entry %d\n", entryNumber);
         }
 
         bzero(buffer, BUFF_SIZE);
@@ -180,9 +225,13 @@ int main(int argc, char* argv[])
         strcpy(MAX_ENTRIES, argv[3]);
 
         whiteboard = malloc(atoi(MAX_ENTRIES) * sizeof(char*));
+        mutex = malloc(atoi(MAX_ENTRIES) * sizeof(pthread_mutex_t));
+
         for (int i=0; i < atoi(MAX_ENTRIES); i++) {
             whiteboard[i] = malloc(ENTRY_SIZE);
+            bzero(whiteboard[i], ENTRY_SIZE);
             strcpy(whiteboard[i], "!12e0\n\n");
+            pthread_mutex_init(&(mutex[i]), NULL);
         }
     }
     else {

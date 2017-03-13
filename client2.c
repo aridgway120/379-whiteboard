@@ -68,7 +68,17 @@ int main()
 		
 		fprintf (stderr, "Cmd::");
 		fgets(in_buff, BUFF_SIZE, stdin);
+		for (int i=0; i<BUFF_SIZE; i++) {
+			if (in_buff[i] == 'z') {
+				in_buff[i] = '\n';
+			}
+		}
 		bytes_written = write(s, in_buff, BUFF_SIZE-1);
+		bzero(in_buff, BUFF_SIZE);
+
+		bzero(s_buff, BUFF_SIZE);
+		read(s, s_buff, BUFF_SIZE);
+		fprintf(stderr, "Response from server:\"%s\"\n", s_buff);
 	}
 
 	close (s);
