@@ -8,7 +8,7 @@
 #include <string.h>
 #include <ctype.h>
 
-#define	 MY_PORT  1121
+#define	 MY_PORT  1255
 
 #define MORE_TEXT 1
 #define DONE 0
@@ -246,6 +246,39 @@ int main()
 			bzero(to_send, BUFF_SIZE);
 			read(s, response, BUFF_SIZE);
 			fprintf(stderr, "Response from server:\"%s\"\n", response);
+			
+			
+			
+			char start_of_response_message;
+			
+			
+			//COULD RECEIVE ONE OF TWO THINGS:
+			//!47e14\nNo such entry!\n 
+			//which indicates we queried outside of the range 
+			//!12e0\n\n
+			//which indicates that the update was successful
+			//it's safe to ignore the last message, or if you want, understand that if the length is 0 then it was a success, 
+			//and respond to the user telling them that it was successful
+			
+			sscanf(response, "%c%lld%c%d%c%c", &token, &num_entry, &mode, &len, &newline, &start_of_response_message);
+			printf("Client understands:\n");
+			printf("Entry number: %lld\n", num_entry);
+			printf("Mode: %c\n", mode);
+			printf("Message length: %d\n", len);
+			printf("first character of message: %c\n", start_of_response_message); //if it's '\n' then we have gotten a success, otherwise there was an error and we must terminate
+			
+			if (start_of_response_message == '\n') {
+				printf("\nSuccessfully updated entry\n");
+			}
+			else {
+			//we've got an error
+				sscanf(response, "%c%lld%c%d%c%999[^\n]%c", &token, &num_entry, &mode, &len, &newline, &message, &newline);
+				fprintf(stderr, "Fatal Error! %s\n", message);
+				break;
+				
+				
+				
+			}
 		}
 			
 			
