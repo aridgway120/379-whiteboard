@@ -165,7 +165,7 @@ int main()
 		
 		rc = sscanf(inbuff, "%c", &Q_or_U_or_C);
 		printf("Received %c.\n", Q_or_U_or_C);
-		if (rc != 1 || (strcmp(&Q_or_U_or_C, "e") != 0 && strcmp(&Q_or_U_or_C, "E") && strcmp(&Q_or_U_or_C, "q") != 0 && strcmp(&Q_or_U_or_C, "Q") != 0 && strcmp(&Q_or_U_or_C, "u") != 0 && strcmp(&Q_or_U_or_C, "U") != 0 && strcmp(&Q_or_U_or_C, "c") != 0  && strcmp(&Q_or_U_or_C, "C") != 0)) { //if it didn't get any input
+		if (rc != 1 || (strcmp(&Q_or_U_or_C, "e") != 0 && strcmp(&Q_or_U_or_C, "E") != 0 && strcmp(&Q_or_U_or_C, "q") != 0 && strcmp(&Q_or_U_or_C, "Q") != 0 && strcmp(&Q_or_U_or_C, "u") != 0 && strcmp(&Q_or_U_or_C, "U") != 0 && strcmp(&Q_or_U_or_C, "c") != 0  && strcmp(&Q_or_U_or_C, "C") != 0)) { //if it didn't get any input
 			fprintf(stderr, "Incorrect entry for querying, updating or clearing an entry or exiting.\n");
 			
 			if (feof(stdin)) { //if there's still elements in stdin that need to be read
