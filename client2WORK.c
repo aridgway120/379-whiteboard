@@ -9,7 +9,7 @@
 #include <ctype.h>
 #include <math.h>
 
-#define	 MY_PORT  1277
+#define	 MY_PORT  1285
 
 
 
@@ -401,6 +401,7 @@ int main()
 			printf("SENDING %s", to_send);
 			bytes_written = write(s, to_send, strlen(to_send)-1);
 			bzero(to_send, BUFF_SIZE);
+			bzero(response, BUFF_SIZE);
 			read(s, response, BUFF_SIZE);
 			
 			
@@ -418,50 +419,70 @@ int main()
             
             
             //to rule out other parts of the code affecting these variables
-            char retoken;
-            long long renum_entry;
-            char remode;
-            int relen;
-            char in_here[1024];
+            //char retoken;
+            //long long renum_entry;
+            //char remode;
+            //int relen;
+            //char in_here[1024];
             
             
 			
 			if (response[0] == '!') {
 				//catch ![num_entry][mode][length]\n but for some reason, doesn't catch length properly, even though I do this for literally every other one
-				sscanf(response, "%c%lld%c%d%c", &retoken, &renum_entry, &remode, &relen, &newline);
-				int enSize = (renum_entry<=0) ? 1 : ((int) log10(renum_entry) + 1);
-            	// missing entry length error
-            	if (relen == -1) {
-                	fprintf(stderr, "Fatal Error! Entry length missing!\n");
-                	break;
-            	}
-            	int elSize = (relen==0) ? 1 : ((int) log10(relen) + 1);
-            
-            	int entry_start = 1+enSize+1+elSize+1; // index at which the entry text starts
+				sscanf(response, "%c%lld%c", &token, &num_entry, &mode);
+				response[strlen(response)-1] = '\0';
+				
+				printf("HERE's the first print of the message:\n\n");
+				//will print error message
+				int string_start = 0;
+            		for (int j = 0; j < strlen(response); j++) {
+            			if (string_start == 1) {
+            				printf("%c", response[j]);
+            			}
+            			if (response[j] == '\n') {
+            				string_start = 1;
+            			}
+            		}
+				
             	
-            	
-				if (relen == 0) {
-				//we got a blank message as the return
-				//!12p0\n\n
-					printf("Client understands:\n");
-					printf("Entry number: %lld\n", renum_entry);
-					printf("Mode: %c\n", remode);
-					printf("Message length: %d\n", relen); //In all the other sscanf calls, it has no problem extracting the correct length, but for some reason this one extracts much more than a number
-					printf("This entry is blank!\n");
+            			
+            	printf("\n\n\nHERE's the EXACT same code, it should print the message in the same way but doesn't when there's an error.....\n\n");
+				if (mode == 'e') {
+					printf("ERROR:\n");
+					int string_start = 0;
+            		for (int j = 0; j < strlen(response); j++) {
+            			if (string_start == 1) {
+            				printf("%c", response[j]);
+            			}
+            			if (response[j] == '\n') {
+            				string_start = 1;
+            			}
+            		}
+            		break;
+				
 				}
 				else {
 					//we got a correct entry or we got an error
 					//!12p30\nthisisaresponsetodemothelength\n or
 					//!12e14\nNo such entry!\n
-					strncat(in_here, response+entry_start, relen); // add entry text //I KNOW I should be using strncpy, but when I do, it throws an abort trap: 6, 
-					printf("Client understands:\n");               // I'm guessing because of relen being enormous
-					printf("Entry number: %lld\n", renum_entry);
-					printf("Mode: %c\n", remode);
-					printf("Message length: %d\n", relen);
-					printf("Message: %s\n", in_here); 
+					//strncat(in_here, response+entry_start, relen); // add entry text //I KNOW I should be using strncpy, but when I do, it throws an abort trap: 6, 
+					//printf("Client understands:\n");               // I'm guessing because of relen being enormous
+					//printf("Entry number: %lld\n", renum_entry);
+					//printf("Mode: %c\n", remode);
+					//printf("Message length: %d\n", relen);
+					//printf("Message: %s\n", in_here); 
+					printf("MESSAGE: ");
+					int string_start = 0;
+            		for (int j = 0; j < strlen(response); j++) {
+            			if (string_start == 1) {
+            				printf("%c", response[j]);
+            			}
+            			if (response[j] == '\n') {
+            				string_start = 1;
+            			}
+            		}
 			
-					printf("Print to the user: %s\n", in_here);
-					if (remode == 'c') {
+					if (mode == 'c') {
 						printf("Would need to decrypt this entry\n");
 					}
 				}
