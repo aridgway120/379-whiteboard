@@ -133,7 +133,6 @@ void * clientHandler(void * arg)
         }
         // entry number out of bounds error
         if (entryNumber > atoi(MAX_ENTRIES)) {
-            //error handling here
             //eg: !47e14\nNo such entry!\n
             bzero(response, BUFF_SIZE);
             sprintf(response, "!%de14\nNo such entry.\n", entryNumber);
@@ -145,14 +144,6 @@ void * clientHandler(void * arg)
         if (buffer[0] == '?') {
             // Query
             fprintf(stderr, "Query to entry %d\n", entryNumber);
-            // if (entryNumber > atoi(MAX_ENTRIES)+1) {
-            //     //error handling here
-            //     //eg: !47e14\nNo such entry!\n
-            //     bzero(response, BUFF_SIZE);
-            //     sprintf(response, "!%de14\nNo such entry.\n", entryNumber);
-            //     write(snew, response, strlen(response));
-            //     continue;
-            // }
 
             // clear response
             bzero(response, BUFF_SIZE);
@@ -176,7 +167,15 @@ void * clientHandler(void * arg)
                 continue;
             }
             int elSize = (entryLen==0) ? 1 : ((int) log10(entryLen) + 1);
-            char encryption_mode[1] = "p";////need to read this
+            char encryption_mode = buffer[enSize+1];
+
+            // invalid encryption mode error
+            if ( !(encryption_mode == 'p' || encryption_mode == 'c') ) {
+                bzero(response, BUFF_SIZE);
+                sprintf(response, "!%d27\nInvalid encryption mode \"%c\"", entryNumber, encryption_mode);
+                write(snew, response, strlen(response));
+                continue;
+            }
 
             fprintf(stderr, "Update to entry %d; %d digits\nlen = %d; %d digits\n", entryNumber, enSize, entryLen, elSize);
             
@@ -197,7 +196,7 @@ void * clientHandler(void * arg)
             strcat(new_entry, temp);
             free(temp);
 
-            strcat(new_entry, encryption_mode); // encryption mode
+            strcat(new_entry, &encryption_mode); // encryption mode
 
             temp = malloc(elSize);              // entry length
             sprintf(temp, "%d", entryLen);
@@ -307,12 +306,48 @@ int main(int argc, char* argv[])
         for (int i=0; i < atoi(MAX_ENTRIES); i++) {
             whiteboard[i] = malloc(ENTRY_SIZE);
             bzero(whiteboard[i], ENTRY_SIZE);
-            strcpy(whiteboard[i], "!12p0\n\n");
+            char default_entry[50];
+            sprintf(default_entry, "!%dp0\n\n", (i+1));
+            strcpy(whiteboard[i], default_entry);
+
             pthread_mutex_init(&(mutex[i]), NULL);
         }
     }
     else {
-        int a;
+        FILE *f  = fopen(argv[3], "r");
+        char line[BUFF_SIZE];
+        MAX_ENTRIES = calloc(12, sizeof(char));
+        int rownum = 0, temp;
+        while (fgets(line, BUFF_SIZE, f) != NULL) {
+            temp = getEntryNumber(line, 1);
+            if (temp>rownum) rownum = temp;
+        }
+        fprintf(stderr, "there are %d rows\n", rownum);
+        sprintf(MAX_ENTRIES, "%d", rownum);
+        
+        // create empty whiteboard
+        whiteboard = malloc(atoi(MAX_ENTRIES) * sizeof(char*));
+        mutex = malloc(atoi(MAX_ENTRIES) * sizeof(pthread_mutex_t));
+
+        for (int i=0; i < atoi(MAX_ENTRIES); i++) {
+            whiteboard[i] = malloc(ENTRY_SIZE);
+            bzero(whiteboard[i], ENTRY_SIZE);
+
+            pthread_mutex_init(&(mutex[i]), NULL);
+        }
+
+        // populate with data
+        rewind(f);
+        int entry_no = 0;
+        while (fgets(line, BUFF_SIZE, f) != NULL) {
+            if (line[0] == '!') {
+                temp = getEntryNumber(line, 1);
+                if (temp != -1) { entry_no = temp-1; }
+            }
+            strcat(whiteboard[entry_no], line);
+        }
+        
+        //exit(0);
     }
 
     // Whiteboard format: !EFN\nMESSAGE\n
