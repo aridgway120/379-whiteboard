@@ -26,8 +26,8 @@
 #define MORE_TEXT 1
 #define DONE 0
 
-// compile as: gcc whiteboard_server.c -o wbs379 -pthread
-// call with: wbs379 portnumber {-f statefile | -n entries}
+// compile as: gcc wbs379.c -o wbs379 -pthread
+// call with: ./wbs379 portnumber {-f statefile | -n entries}
 char* MAX_ENTRIES;
 char** whiteboard;
 pthread_mutex_t * mutex;
@@ -120,9 +120,7 @@ void * clientHandler(void * arg)
         bzero(buffer, BUFF_SIZE);
         bzero(response, BUFF_SIZE);
         bytes_read = read(snew, buffer, BUFF_SIZE-1);
-        fprintf(stderr, "\n%d bytes read.\n", bytes_read);
         if (bytes_read <= 0) { break; }
-        fprintf(stderr, "Got this:\n\"%s\"from client.\n", buffer);
 
         int entryNumber = getEntryNumber(buffer, 1);
         int entryIndex = entryNumber-1;
@@ -145,7 +143,6 @@ void * clientHandler(void * arg)
         
         if (buffer[0] == '?') {
             // Query
-            fprintf(stderr, "Query to entry %d\n", entryNumber);
 
             // clear response
             bzero(response, BUFF_SIZE);
@@ -179,11 +176,8 @@ void * clientHandler(void * arg)
                 continue;
             }
 
-            fprintf(stderr, "Update to entry %d; %d digits\nlen = %d; %d digits\n", entryNumber, enSize, entryLen, elSize);
             
-
             int buff_len = strlen(buffer);
-            fprintf(stderr, "buffer len = %d\n", buff_len);
 
             int entry_start = 1+enSize+1+elSize+1; // index at which the entry text starts
 
@@ -209,7 +203,6 @@ void * clientHandler(void * arg)
             strncat(new_entry, buffer+entry_start, entryLen); // add entry text
             strcat(new_entry, "\n");            // add newline
 
-            fprintf(stderr, "new entry: \"%s\"\n", new_entry);
             // update whiteboard
             pthread_mutex_lock( &(mutex[entryIndex]) );
             bzero(whiteboard[entryIndex], ENTRY_SIZE);
@@ -223,7 +216,6 @@ void * clientHandler(void * arg)
             write(snew, response, strlen(response));
         }
         else {
-            fprintf(stderr, "Unknown to entry %d\n", entryNumber);
             char c = buffer[0];
             bzero(response, BUFF_SIZE);
             sprintf(response, "!%de30\nInvalid command character \"%c\".\n", entryNumber, buffer[0]);
@@ -234,8 +226,6 @@ void * clientHandler(void * arg)
     }
 
     close(snew);
-
-    fprintf(stderr, "Socket closed.\n");
 
     return (void *) 0;
 }
@@ -248,7 +238,6 @@ void orderly_exit()
         fprintf(f, "%s", whiteboard[i]);
     }
     fclose(f);
-    fprintf(stderr, "Whiteboard successfully saved.\n");
 
     // free global vars
     free(threads);
@@ -336,7 +325,6 @@ int main(int argc, char* argv[])
             temp = getEntryNumber(line, 1);
             if (temp>rownum) rownum = temp;
         }
-        fprintf(stderr, "there are %d rows\n", rownum);
         sprintf(MAX_ENTRIES, "%d", rownum);
         
         // create empty whiteboard
@@ -407,11 +395,9 @@ int main(int argc, char* argv[])
             perror("Server: Accept failed.");
         }
         else {
-            fprintf(stderr, "Client diverted to socket %d.\n", ind);
             pthread_create(&(threads[t_ind]), NULL, clientHandler, (void *) &(snew[ind]) );
             t_ind++;
             if (t_ind%100 == 0 ) {
-                fprintf(stderr, "Resizing\n");
                 threads = realloc(threads, sizeof(threads) + 100*sizeof(pthread_t));
             }
             ////clientHandler((void*) &(snew[ind]));
