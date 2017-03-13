@@ -16,9 +16,12 @@
 #define LOAD 2
 
 #define ENTRY_SIZE 512
+#define BUFF_SIZE 512
 
 #define N_SOCKS 20
-#define FREE -2
+
+#define MORE_TEXT 1
+#define DONE 0
 
 // compile as: gcc whiteboard_server.c -o wbs379 -pthread
 // call with: wbs379 portnumber {-f statefile | -n entries}
@@ -55,18 +58,88 @@ int getMode(char arg[]) {
     return -1;
 }
 
+int getEntryNumber(char buffer[BUFF_SIZE], int ind)
+{
+    // extracts entry number from request
+    // if there is no number at [1], returns -1.
+    if (!isdigit(buffer[1])) {
+        return -1;
+    }
+
+    int e_num = 0;
+    while (1) {
+        char c = buffer[ind];
+        if (isdigit(c)) {
+            e_num *= 10;
+            e_num += atoi(&c);
+        }
+        else {
+            break;
+        }
+        ind++;
+    }
+    return e_num;
+}
+
+int getEntryLen(char buffer[BUFF_SIZE], int entry_no)
+{
+    // extracts entry number from request
+    int ind = 2;
+    if (entry_no == 0) {
+        ind += 1;
+    }
+    else { ind += (int) (log10(entry_no) + 1); }
+
+    return getEntryNumber(buffer, ind);
+}
+
 int clientHandler(void * arg)
 {
     int snew = *((int *) arg);
+    char buffer[BUFF_SIZE];
+    bzero(buffer, BUFF_SIZE);
+
+    int bytes_written, bytes_read=1;
 
     char* CONNECTION_MSG = malloc(33 + (int)log10(atoi(MAX_ENTRIES)));
     strcpy(CONNECTION_MSG, "CMPUT379 Whiteboard Server v0\n");
     strcat(CONNECTION_MSG, MAX_ENTRIES);
     strcat(CONNECTION_MSG, "\n");
 
-    int bytes_written = write(snew, CONNECTION_MSG, strlen(CONNECTION_MSG));
+    bytes_written = write(snew, CONNECTION_MSG, strlen(CONNECTION_MSG));
 
-    
+    while (1) {
+        ////
+        ////fprintf(stderr, "t\n%d\n/t\n\n", (int)log10(0));
+        ////
+        bytes_read = read(snew, buffer, BUFF_SIZE-1);
+        fprintf(stderr, "%d bytes read.\n", bytes_read);
+        if (bytes_read <= 0) { break; }
+        fprintf(stderr, "Got this:\n%sfrom client.\n", buffer);
+
+        int entryNumber = getEntryNumber(buffer, 1);
+        int entryLen = getEntryLen(buffer, entryNumber);
+        
+        if (buffer[0] == '?') {
+            // Query
+            fprintf(stderr, "Query to entry %d; len = %d\n", entryNumber, entryLen);
+        }
+        else if (buffer[0] == '@') {
+            // Update
+            // format: @[entry]p[msglen]\nmessage\n
+            fprintf(stderr, "Update to entry %d; len = %d\n", entryNumber, entryLen);
+            // entrylen = messagelen + 4(!p\n\n) + 3 + (int)(log10(entrylen)) + (int)(log10(entryno))
+            int entry_len = strlen(buffer);
+            fprintf(stderr, "buffer len = %d\n", entry_len);
+            //char* entry = malloc();
+        }
+        else {
+            fprintf(stderr, "Unknown to entry %d; len = %d\n", entryNumber, entryLen);
+        }
+
+        bzero(buffer, BUFF_SIZE);
+    }
+
     close(snew);
 
     fprintf(stderr, "Socket closed.\n");
@@ -162,7 +235,7 @@ int main(int argc, char* argv[])
             fprintf(stderr, "Client diverted to socket %d.\n", ind);
             clientHandler((void*) &(snew[ind]));
             ind++;
-            if (ind >= 20) { ind -= 20; }
+            if (ind >= N_SOCKS) { ind -= N_SOCKS; }
         }
         //
     }
