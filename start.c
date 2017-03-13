@@ -575,15 +575,11 @@ int main() {
 				printf("Message: %s\n", final_message); 
 			
 				printf("Print to the user: %s\n", final_message);
+				if (mode == 'c') {
+					printf("Would need to decrypt this entry\n");
+				}
 			}
 		}
-	
 	} //end while statement from top of main
 }//close main
-
-/*
-NOTE:
-
-upon
-*/
-		
+	
