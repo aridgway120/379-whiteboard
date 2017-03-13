@@ -6,8 +6,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <ctype.h>
 
-#define	 MY_PORT  1111
+#define	 MY_PORT  1112
 
 #define MORE_TEXT 1
 #define DONE 0
@@ -20,6 +21,55 @@
  This is a sample client program for the number server. The client and
  the server need not run on the same machine.
  --------------------------------------------------------------------- */
+
+
+void strreplace(char *src, char *str, char *rep)
+//http://stackoverflow.com/questions/3659694/how-to-replace-substring-in-c
+{
+    char *p = strstr(src, str);
+    do  
+    {   
+        if(p)
+        {
+            char buf[1024];
+            memset(buf,'\0',strlen(buf));
+
+            if(src == p)
+            {
+                strcpy(buf,rep);
+                strcat(buf,p+strlen(str));  
+            }
+            else
+            {
+                strncpy(buf,src,strlen(src) - strlen(p));
+                strcat(buf,rep);
+                strcat(buf,p+strlen(str));
+            }
+
+            memset(src,'\0',strlen(src));
+            strcpy(src,buf);
+        }   
+
+    }while(p && (p = strstr(src, str)));
+}
+
+int string_is_number(char input[]) {
+//http://stackoverflow.com/questions/16644906/how-to-check-if-a-string-is-a-number
+//modified to fit situation
+	/* Strip trailing newline */
+	size_t ln = strlen(input) - 1;
+	if( input[ln] == '\n' ) input[ln] = '\0';
+
+	/* Ensure that input is a number */
+	for( int i = 0; i < ln; i++){
+    	if( !isdigit(input[i]) ){
+        	fprintf(stderr, "%c is not a number.\n", input[i]);
+        	return 0;
+    	}
+	}
+	return 1;
+}
+
 
 int main()
 {
@@ -112,7 +162,7 @@ int main()
 		fgets(inbuff, 200, stdin);
 		
 		rc = sscanf(inbuff, "%c", &Q_or_U_or_C);
-		
+		printf("Received %c.\n", Q_or_U_or_C);
 		if (rc != 1 || (strcmp(&Q_or_U_or_C, "e") != 0 && strcmp(&Q_or_U_or_C, "E") && strcmp(&Q_or_U_or_C, "q") != 0 && strcmp(&Q_or_U_or_C, "Q") != 0 && strcmp(&Q_or_U_or_C, "u") != 0 && strcmp(&Q_or_U_or_C, "U") != 0 && strcmp(&Q_or_U_or_C, "c") != 0  && strcmp(&Q_or_U_or_C, "C") != 0)) { //if it didn't get any input
 			fprintf(stderr, "Incorrect entry for querying, updating or clearing an entry or exiting.\n");
 			
@@ -143,8 +193,8 @@ int main()
 		if (strcmp(&Q_or_U_or_C, "c") == 0 || strcmp(&Q_or_U_or_C, "C") == 0) {
 		//CLEANING
 			token = '@';
-			CLEANING_FLAG = 1;
-			printf("Which entry would you like to update? (1 to %d): ", num_from_server);
+			
+			printf("Which entry would you like to update? (starts at 1): ");
 			fgets(inbuff, 200, stdin);
 			rc = sscanf(inbuff, "%s", entry);
 			
@@ -224,13 +274,11 @@ int main()
 			//QUERYING
 			token = '?';
 			
-			QUERY_FLAG = 1;  //these are being used to logically separate how the responses are parsed in the final step, in the real
-			//program these are unneeded as the final functions would just be part of these first update or query functions, they'd block until they receive the
-			//server response
+			
 			
 			
 			//would be great to replace this with fgets, because a sequence of events that can break all these scanf statements is if they hit enter, then type something
-			printf("Which entry would you like to query? (1 to %d): ", num_from_server);
+			printf("Which entry would you like to query? (starts at 1): ");
 			fgets(inbuff, 200, stdin);
 			rc = sscanf(inbuff, "%s", entry);
 			
@@ -293,12 +341,10 @@ int main()
 		
 		else if (strcmp(&Q_or_U_or_C,"u") == 0 || strcmp(&Q_or_U_or_C, "U") == 0) {
 			//UPDATING
-			UPDATE_FLAG = 1;  //these are being used to logically separate how the responses are parsed in the final step, in the real
-			//program these are unneeded as the final functions would just be part of these first update or query functions, they'd block until they receive the
-			//server response
+			
 			token = '@';
 			
-			printf("Which entry would you like to update? (1 to %d): ", num_from_server);
+			printf("Which entry would you like to update? (starts at 1): ");
 			fgets(inbuff, 200, stdin);
 			rc = sscanf(inbuff, "%s", entry);
 			
