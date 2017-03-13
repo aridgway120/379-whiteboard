@@ -7,13 +7,13 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define	 MY_PORT  2222
+#define	 MY_PORT  1111
 
 #define MORE_TEXT 1
 #define DONE 0
 
-#define ENTRY_SIZE 512
-#define BUFF_SIZE 512
+#define ENTRY_SIZE 1024
+#define BUFF_SIZE 1024
 
 /* ---------------------------------------------------------------------
  This is a sample client program for the number server. The client and
@@ -34,7 +34,7 @@ int main()
 
 	struct	hostent		*host;
 
-	host = gethostbyname ("localhost");
+	host = gethostbyname ("127.0.0.1");
 
 	if (host == NULL) {
 		perror ("Client: cannot get host description");
@@ -65,6 +65,7 @@ int main()
 	fprintf (stderr, "Welcome to %sentry whiteboard.\n\n", s_buff);
 
 	while (1) {
+		
 		fprintf (stderr, "Cmd::");
 		fgets(in_buff, BUFF_SIZE, stdin);
 		bytes_written = write(s, in_buff, BUFF_SIZE-1);
