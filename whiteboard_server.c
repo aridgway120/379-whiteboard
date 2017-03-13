@@ -121,10 +121,20 @@ int clientHandler(void * arg)
         fprintf(stderr, "Got this:\n\"%s\"from client.\n", buffer);
 
         int entryNumber = getEntryNumber(buffer, 1);
+        int entryIndex = entryNumber-1;
         // missing entry number error
         if (entryNumber == -1 && (buffer[0]=='?' || buffer[0]=='@') ) {
             bzero(response, BUFF_SIZE);
             sprintf(response, "!-e32\nEntry number invalid or missing.\n");
+            write(snew, response, strlen(response));
+            continue;
+        }
+        // entry number out of bounds error
+        if (entryNumber > atoi(MAX_ENTRIES)) {
+            //error handling here
+            //eg: !47e14\nNo such entry!\n
+            bzero(response, BUFF_SIZE);
+            sprintf(response, "!%de14\nNo such entry.\n", entryNumber);
             write(snew, response, strlen(response));
             continue;
         }
@@ -133,23 +143,22 @@ int clientHandler(void * arg)
         if (buffer[0] == '?') {
             // Query
             fprintf(stderr, "Query to entry %d\n", entryNumber);
-
-            if (entryNumber >= atoi(MAX_ENTRIES)) {
-                //error handling here
-                //eg: !47e14\nNo such entry!\n
-                bzero(response, BUFF_SIZE);
-                sprintf(response, "!%de14\nNo such entry.\n", entryNumber);
-                write(snew, response, strlen(response));
-                continue;
-            }
+            // if (entryNumber > atoi(MAX_ENTRIES)+1) {
+            //     //error handling here
+            //     //eg: !47e14\nNo such entry!\n
+            //     bzero(response, BUFF_SIZE);
+            //     sprintf(response, "!%de14\nNo such entry.\n", entryNumber);
+            //     write(snew, response, strlen(response));
+            //     continue;
+            // }
 
             // clear response
             bzero(response, BUFF_SIZE);
             // get entry
-            pthread_mutex_lock( &(mutex[entryNumber]) );
-            strcpy(response, whiteboard[entryNumber]);
-            pthread_mutex_unlock( &(mutex[entryNumber]) );
-
+            pthread_mutex_lock( &(mutex[entryIndex]) );
+            strcpy(response, whiteboard[entryIndex]);
+            pthread_mutex_unlock( &(mutex[entryIndex]) );
+=
             write(snew, response, strlen(response));
 
         }
@@ -199,10 +208,10 @@ int clientHandler(void * arg)
 
             fprintf(stderr, "new entry: \"%s\"\n", new_entry);
             // update whiteboard
-            pthread_mutex_lock( &(mutex[entryNumber]) );
-            bzero(whiteboard[entryNumber], ENTRY_SIZE);
-            strcpy(whiteboard[entryNumber], new_entry);
-            pthread_mutex_unlock( &(mutex[entryNumber]) );
+            pthread_mutex_lock( &(mutex[entryIndex]) );
+            bzero(whiteboard[entryIndex], ENTRY_SIZE);
+            strcpy(whiteboard[entryIndex], new_entry);
+            pthread_mutex_unlock( &(mutex[entryIndex]) );
 
             // send empty error message
             bzero(response, BUFF_SIZE);

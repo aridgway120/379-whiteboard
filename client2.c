@@ -7,7 +7,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define	 MY_PORT  1111
+//#define	 MY_PORT  1111
 
 #define MORE_TEXT 1
 #define DONE 0
@@ -20,8 +20,9 @@
  the server need not run on the same machine.
  --------------------------------------------------------------------- */
 
-int main()
+int main(int argc, char* argv[])
 {
+	int MY_PORT = atoi(argv[1]);
 	int	s, number;
 	int bytes_read, bytes_written;
 
