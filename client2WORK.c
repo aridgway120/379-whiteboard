@@ -7,8 +7,11 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
+#include <math.h>
 
-#define	 MY_PORT  1255
+#define	 MY_PORT  1275
+
+
 
 #define MORE_TEXT 1
 #define DONE 0
@@ -53,6 +56,41 @@ void strreplace(char *src, char *str, char *rep)
         }   
 
     }while(p && (p = strstr(src, str)));
+}
+
+int getEntryNumber(char buffer[BUFF_SIZE], int ind)
+{
+    // extracts entry number from request
+    // if there is no number at [1], returns -1.
+    if (!isdigit(buffer[1])) {
+        return -1;
+    }
+
+    int e_num = 0;
+    while (1) {
+        char c = buffer[ind];
+        if (isdigit(c)) {
+            e_num *= 10;
+            e_num += atoi(&c);
+        }
+        else {
+            break;
+        }
+        ind++;
+    }
+    return e_num;
+}
+
+int getEntryLen(char buffer[BUFF_SIZE], int entry_no)
+{
+    // extracts entry number from request
+    int ind = 2;
+    if (entry_no == 0) {
+        ind += 1;
+    }
+    else { ind += (int) (log10(entry_no) + 1); }
+
+    return getEntryNumber(buffer, ind);
 }
 
 int string_is_number(char input[]) {
@@ -130,6 +168,7 @@ int main()
 	
 	char Q_or_U_or_C;
 	char C_or_P;
+	char start_of_response_message;
 	char mode;
 	char token;
 	char newline = '\n';
@@ -249,7 +288,7 @@ int main()
 			
 			
 			
-			char start_of_response_message;
+			
 			
 			
 			//COULD RECEIVE ONE OF TWO THINGS:
@@ -363,7 +402,74 @@ int main()
 			bytes_written = write(s, to_send, strlen(to_send)-1);
 			bzero(to_send, BUFF_SIZE);
 			read(s, response, BUFF_SIZE);
+			
+			
+			
+			
+			
+
 			fprintf(stderr, "Response from server:\"%s\"\n", response);
+			
+			
+			
+			
+			
+
+            
+            
+            //to rule out other parts of the code affecting these variables
+            char retoken;
+            long long renum_entry;
+            char remode;
+            int relen;
+            char in_here[1024];
+            
+            
+			
+			if (response[0] == '!') {
+				//catch ![num_entry][mode][length]\n but for some reason, doesn't catch length properly, even though I do this for literally every other one
+				sscanf(response, "%c%lld%c%%d%c", &retoken, &renum_entry, &remode, &relen, &newline);
+				int enSize = (renum_entry<=0) ? 1 : ((int) log10(renum_entry) + 1);
+            	// missing entry length error
+            	if (len == -1) {
+                	fprintf(stderr, "Fatal Error! Entry length missing!\n");
+                	break;
+            	}
+            	int elSize = (relen==0) ? 1 : ((int) log10(relen) + 1);
+            
+            	int entry_start = 1+enSize+1+elSize+1; // index at which the entry text starts
+            	
+            	
+				if (relen == 0) {
+				//we got a blank message as the return
+				//!12p0\n\n
+					printf("Client understands:\n");
+					printf("Entry number: %lld\n", renum_entry);
+					printf("Mode: %c\n", remode);
+					printf("Message length: %d\n", relen); //In all the other sscanf calls, it has no problem extracting the correct length, but for some reason this one extracts much more than a number
+					printf("This entry is blank!\n");
+				}
+				else {
+					//we got a correct entry or we got an error
+					//!12p30\nthisisaresponsetodemothelength\n or
+					//!12e14\nNo such entry!\n
+					strncat(in_here, response+entry_start, relen); // add entry text //I KNOW I should be using strncpy, but when I do, it throws an abort trap: 6, 
+					printf("Client understands:\n");               // I'm guessing because of relen being enormous
+					printf("Entry number: %lld\n", renum_entry);
+					printf("Mode: %c\n", remode);
+					printf("Message length: %d\n", relen);
+					printf("Message: %s\n", in_here); 
+			
+					printf("Print to the user: %s\n", in_here);
+					if (remode == 'c') {
+						printf("Would need to decrypt this entry\n");
+					}
+				}
+			}
+			else {
+				fprintf(stderr, "Fatal Error! Unrecognized prefix!\n");
+				break;
+			}
 		}
 		
 		
@@ -473,6 +579,34 @@ int main()
 			bzero(to_send, BUFF_SIZE);
 			read(s, response, BUFF_SIZE);
 			fprintf(stderr, "Response from server:\"%s\"\n", response);
+			
+			//COULD RECEIVE ONE OF TWO THINGS:
+			//!47e14\nNo such entry!\n 
+			//which indicates we queried outside of the range 
+			//!12e0\n\n
+			//which indicates that the update was successful
+			//it's safe to ignore the last message, or if you want, understand that if the length is 0 then it was a success, 
+			//and respond to the user telling them that it was successful
+			
+			sscanf(response, "%c%lld%c%d%c%c", &token, &num_entry, &mode, &len, &newline, &start_of_response_message);
+			printf("Client understands:\n");
+			printf("Entry number: %lld\n", num_entry);
+			printf("Mode: %c\n", mode);
+			printf("Message length: %d\n", len);
+			printf("first character of message: %c\n", start_of_response_message); //if it's '\n' then we have gotten a success, otherwise there was an error and we must terminate
+			
+			if (start_of_response_message == '\n') {
+				printf("\nSuccessfully updated entry\n");
+			}
+			else {
+			//we've got an error
+				sscanf(response, "%c%lld%c%d%c%999[^\n]%c", &token, &num_entry, &mode, &len, &newline, &message, &newline);
+				fprintf(stderr, "Fatal Error! %s\n", message);
+				break;
+				
+				
+				
+			}
 			
 		}
 		
