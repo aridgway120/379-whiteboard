@@ -294,7 +294,7 @@ int main(int argc, char* argv[])
     // Startup procedures
     int sock, snew[N_SOCKS], bind_result, clientlength;
 
-    threads = calloc(100, sizeof(pthread_t));
+    threads = calloc(10, sizeof(pthread_t));
 
     for (int i=0; i < N_SOCKS; i++) { snew[i] = -1; }
 
@@ -330,9 +330,9 @@ int main(int argc, char* argv[])
             fprintf(stderr, "Client diverted to socket %d.\n", ind);
             pthread_create(&(threads[t_ind]), NULL, clientHandler, (void *) &(snew[ind]) );
             t_ind++;
-            if (t_ind >= sizeof(*threads)/sizeof(pthread_t)) {
-                threads = realloc(threads, sizeof(*threads) + 100*sizeof(pthread_t));
-            }
+            // if (t_ind >= sizeof(*threads)/sizeof(pthread_t)) {
+            //     threads = realloc(threads, sizeof(*threads) + 100*sizeof(pthread_t));
+            // }
             //clientHandler((void*) &(snew[ind]));
             ind++;
             if (ind >= N_SOCKS) { ind -= N_SOCKS; }
