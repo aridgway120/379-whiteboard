@@ -215,7 +215,7 @@ int main()
 			continue;
 		}
 		
-		printf("Received %c.\n", Q_or_U_or_C);
+		//printf("Received %c.\n", Q_or_U_or_C);
 		
 		
 		
@@ -224,7 +224,6 @@ int main()
 		
 		if (Q_or_U_or_C == 'e' || Q_or_U_or_C == 'E') {
 		//EXITING
-			printf("Exiting...\n");
 			break;
 		}
 		
@@ -253,7 +252,6 @@ int main()
 					
 					continue;
 				}
-				else {printf("string is a number\n");}
 			}
 			else if (strcmp(entry, "\n") == 0) {
 			//string is emtpy
@@ -270,7 +268,7 @@ int main()
 			}
 				
 			
-			printf("received %s\n", entry);
+			//printf("received %s\n", entry);
 			
 			num_entry = atoi(entry);
 			
@@ -279,12 +277,12 @@ int main()
 			}
 			//@12p0\n\n
 			sprintf(to_send, "%c%lld%c%d%c%c", token, num_entry, 'p', 0, newline, newline);
-			printf("SENDING %s", to_send);
+			//printf("SENDING %s", to_send);
 			bytes_written = write(s, to_send, strlen(to_send)-1);
 			//bytes_written = write(s, to_send, BUFF_SIZE);
 			bzero(to_send, BUFF_SIZE);
 			read(s, response, BUFF_SIZE);
-			fprintf(stderr, "Response from server:\"%s\"\n", response);
+			//fprintf(stderr, "Response from server:\"%s\"\n", response);
 			
 			
 			
@@ -300,11 +298,11 @@ int main()
 			//and respond to the user telling them that it was successful
 			
 			sscanf(response, "%c%lld%c%d%c%c", &token, &num_entry, &mode, &len, &newline, &start_of_response_message);
-			printf("Client understands:\n");
-			printf("Entry number: %lld\n", num_entry);
-			printf("Mode: %c\n", mode);
-			printf("Message length: %d\n", len);
-			printf("first character of message: %c\n", start_of_response_message); //if it's '\n' then we have gotten a success, otherwise there was an error and we must terminate
+			//printf("Client understands:\n");
+			//printf("Entry number: %lld\n", num_entry);
+			//printf("Mode: %c\n", mode);
+			//printf("Message length: %d\n", len);
+			//printf("first character of message: %c\n", start_of_response_message); //if it's '\n' then we have gotten a success, otherwise there was an error and we must terminate
 			
 			if (start_of_response_message == '\n') {
 				printf("\nSuccessfully updated entry\n");
@@ -371,7 +369,7 @@ int main()
 					
 					continue;
 				}
-				else {printf("string is a number\n");}
+				//else {printf("string is a number\n");}
 			}
 			else if (strcmp(entry, "\n") == 0) {
 			//string is emtpy
@@ -388,7 +386,7 @@ int main()
 			}
 				
 			
-			printf("received %s\n", entry);
+			//printf("received %s\n", entry);
 			
 			num_entry = atoi(entry);
 			
@@ -398,32 +396,17 @@ int main()
 			
 			//construct the response
 			sprintf(to_send, "%c%lld%c", token, num_entry, newline);
-			printf("SENDING %s", to_send);
+			//printf("SENDING %s", to_send);
 			bytes_written = write(s, to_send, strlen(to_send)-1);
 			bzero(to_send, BUFF_SIZE);
 			bzero(response, BUFF_SIZE);
 			read(s, response, BUFF_SIZE);
 			
 			
-			
-			
-			
 
-			fprintf(stderr, "Response from server:\"%s\"\n", response);
+			//fprintf(stderr, "Response from server:\"%s\"\n", response);
 			
 			
-			
-			
-			
-
-            
-            
-            //to rule out other parts of the code affecting these variables
-            //char retoken;
-            //long long renum_entry;
-            //char remode;
-            //int relen;
-            //char in_here[1024];
             
             
 			
@@ -431,46 +414,30 @@ int main()
 				//catch ![num_entry][mode][length]\n but for some reason, doesn't catch length properly, even though I do this for literally every other one
 				sscanf(response, "%c%lld%c", &token, &num_entry, &mode);
 				response[strlen(response)-1] = '\0';
-				
-				printf("HERE's the first print of the message:\n\n");
-				//will print error message
+
 				int string_start = 0;
-            		for (int j = 0; j < strlen(response); j++) {
-            			if (string_start == 1) {
-            				printf("%c", response[j]);
-            			}
-            			if (response[j] == '\n') {
-            				string_start = 1;
-            			}
-            		}
-				
+				//we got a correct entry or we got an error
+				//!12p30\nthisisaresponsetodemothelength\n or
+				//!12e14\nNo such entry!\n
             	
-            			
-            	printf("\n\n\nHERE's the EXACT same code, it should print the message in the same way but doesn't when there's an error.....\n\n");
 				if (mode == 'e') {
 					printf("ERROR:\n");
-					int string_start = 0;
+					string_start = 0;
             		for (int j = 0; j < strlen(response); j++) {
             			if (string_start == 1) {
-            				printf("%c", response[j]);
+            				fprintf(stderr, "%c", response[j]);
             			}
             			if (response[j] == '\n') {
             				string_start = 1;
             			}
             		}
+            		
             		break;
 				
 				}
 				else {
-					//we got a correct entry or we got an error
-					//!12p30\nthisisaresponsetodemothelength\n or
-					//!12e14\nNo such entry!\n
-					//strncat(in_here, response+entry_start, relen); // add entry text //I KNOW I should be using strncpy, but when I do, it throws an abort trap: 6, 
-					//printf("Client understands:\n");               // I'm guessing because of relen being enormous
-					//printf("Entry number: %lld\n", renum_entry);
-					//printf("Mode: %c\n", remode);
-					//printf("Message length: %d\n", relen);
-					//printf("Message: %s\n", in_here); 
+
+					
 					printf("MESSAGE: ");
 					int string_start = 0;
             		for (int j = 0; j < strlen(response); j++) {
@@ -525,7 +492,7 @@ int main()
 					
 					continue;
 				}
-				else {printf("string is a number\n");}
+				//else {printf("string is a number\n");}
 			}
 			else if (strcmp(entry, "\n") == 0) {
 			//string is emtpy
@@ -542,7 +509,7 @@ int main()
 			}
 				
 			
-			printf("received %s\n", entry);
+			//printf("received %s\n", entry);
 			
 			num_entry = atoi(entry);
 			
@@ -580,7 +547,7 @@ int main()
 				continue;
 			}
 
-			printf("received %c\n", C_or_P);
+			//printf("received %c\n", C_or_P);
 			
 			//setting mode by default to p, if they answered yes, then it will be changed to encryption and the message will be encrypted
 			mode = 'p';
@@ -589,17 +556,17 @@ int main()
 				//message = encrypt(message);
 			}
 			
-			printf("set mode to %c\n", mode);
+			//printf("set mode to %c\n", mode);
 			
 			len = strlen(message) - 1;
 			
 			
 			sprintf(to_send, "%c%lld%c%d%c%s%c", token, num_entry, mode, len, newline, message, newline);
-			printf("SENDING %s", to_send);
+			//printf("SENDING %s", to_send);
 			bytes_written = write(s, to_send, strlen(to_send)-1);
 			bzero(to_send, BUFF_SIZE);
 			read(s, response, BUFF_SIZE);
-			fprintf(stderr, "Response from server:\"%s\"\n", response);
+			//fprintf(stderr, "Response from server:\"%s\"\n", response);
 			
 			//COULD RECEIVE ONE OF TWO THINGS:
 			//!47e14\nNo such entry!\n 
@@ -610,11 +577,11 @@ int main()
 			//and respond to the user telling them that it was successful
 			
 			sscanf(response, "%c%lld%c%d%c%c", &token, &num_entry, &mode, &len, &newline, &start_of_response_message);
-			printf("Client understands:\n");
-			printf("Entry number: %lld\n", num_entry);
-			printf("Mode: %c\n", mode);
-			printf("Message length: %d\n", len);
-			printf("first character of message: %c\n", start_of_response_message); //if it's '\n' then we have gotten a success, otherwise there was an error and we must terminate
+			//printf("Client understands:\n");
+			//printf("Entry number: %lld\n", num_entry);
+			//printf("Mode: %c\n", mode);
+			//printf("Message length: %d\n", len);
+			//printf("first character of message: %c\n", start_of_response_message); //if it's '\n' then we have gotten a success, otherwise there was an error and we must terminate
 			
 			if (start_of_response_message == '\n') {
 				printf("\nSuccessfully updated entry\n");
@@ -641,7 +608,7 @@ int main()
 		
 		
 	}
-	fprintf(stderr, "Exiting...\n");
+	fprintf(stderr, "\nExiting...\n");
 	close (s);
 	return 0;
 }
