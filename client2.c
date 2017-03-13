@@ -73,7 +73,7 @@ int main()
 				in_buff[i] = '\n';
 			}
 		}
-		bytes_written = write(s, in_buff, BUFF_SIZE-1);
+		bytes_written = write(s, in_buff, strlen(in_buff));
 		bzero(in_buff, BUFF_SIZE);
 
 		bzero(s_buff, BUFF_SIZE);

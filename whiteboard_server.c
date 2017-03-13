@@ -17,8 +17,8 @@
 #define NEW 1
 #define LOAD 2
 
-#define ENTRY_SIZE 512
-#define BUFF_SIZE 512
+#define ENTRY_SIZE 1024
+#define BUFF_SIZE 1024
 
 #define N_SOCKS 20
 
@@ -99,7 +99,8 @@ int getEntryLen(char buffer[BUFF_SIZE], int entry_no)
 int clientHandler(void * arg)
 {
     int snew = *((int *) arg);
-    char buffer[BUFF_SIZE];
+    char* buffer = malloc(BUFF_SIZE);
+    char* response = malloc(BUFF_SIZE);
     bzero(buffer, BUFF_SIZE);
 
     int bytes_written, bytes_read=1;
@@ -112,28 +113,59 @@ int clientHandler(void * arg)
     bytes_written = write(snew, CONNECTION_MSG, strlen(CONNECTION_MSG));
 
     while (1) {
-        ////
-        ////fprintf(stderr, "t\n%d\n/t\n\n", (int)log10(0));
-        ////
+        bzero(buffer, BUFF_SIZE);
+        bzero(response, BUFF_SIZE);
         bytes_read = read(snew, buffer, BUFF_SIZE-1);
-        fprintf(stderr, "%d bytes read.\n", bytes_read);
+        fprintf(stderr, "\n%d bytes read.\n", bytes_read);
         if (bytes_read <= 0) { break; }
         fprintf(stderr, "Got this:\n\"%s\"from client.\n", buffer);
 
         int entryNumber = getEntryNumber(buffer, 1);
-        int enSize = (entryNumber==0) ? 1 : ((int) log10(entryNumber) + 1);
+        // missing entry number error
+        if (entryNumber == -1 && (buffer[0]=='?' || buffer[0]=='@') ) {
+            bzero(response, BUFF_SIZE);
+            sprintf(response, "!-e32\nEntry number invalid or missing.\n");
+            write(snew, response, strlen(response));
+            continue;
+        }
+        int enSize = (entryNumber<=0) ? 1 : ((int) log10(entryNumber) + 1);
         
         if (buffer[0] == '?') {
             // Query
             fprintf(stderr, "Query to entry %d\n", entryNumber);
+
+            if (entryNumber >= atoi(MAX_ENTRIES)) {
+                //error handling here
+                //eg: !47e14\nNo such entry!\n
+                bzero(response, BUFF_SIZE);
+                sprintf(response, "!%de14\nNo such entry.\n", entryNumber);
+                write(snew, response, strlen(response));
+                continue;
+            }
+
+            // clear response
+            bzero(response, BUFF_SIZE);
+            // get entry
+            pthread_mutex_lock( &(mutex[entryNumber]) );
+            strcpy(response, whiteboard[entryNumber]);
+            pthread_mutex_unlock( &(mutex[entryNumber]) );
+
+            write(snew, response, strlen(response));
 
         }
         else if (buffer[0] == '@') {
             // Update
             // format: @[entry]p[msglen]\nmessage\n
             int entryLen = getEntryLen(buffer, entryNumber);
+            // missing entry length error
+            if (entryLen == -1) {
+                bzero(response, BUFF_SIZE);
+                sprintf(response, "!%de28\nUpdate entry length missing.\n", entryNumber);
+                write(snew, response, strlen(response));
+                continue;
+            }
             int elSize = (entryLen==0) ? 1 : ((int) log10(entryLen) + 1);
-            char encryption_mode[1] = "p";
+            char encryption_mode[1] = "p";////need to read this
 
             fprintf(stderr, "Update to entry %d; %d digits\nlen = %d; %d digits\n", entryNumber, enSize, entryLen, elSize);
             
@@ -173,16 +205,20 @@ int clientHandler(void * arg)
             pthread_mutex_unlock( &(mutex[entryNumber]) );
 
             // send empty error message
-            bzero(buffer, BUFF_SIZE);
-            sprintf(buffer, "!%de0\n\n", entryNumber);
+            bzero(response, BUFF_SIZE);
+            sprintf(response, "!%de0\n\n", entryNumber);
 
-            write(snew, buffer, strlen(buffer));
+            write(snew, response, strlen(response));
         }
         else {
             fprintf(stderr, "Unknown to entry %d\n", entryNumber);
+            char c = buffer[0];
+            bzero(response, BUFF_SIZE);
+            sprintf(response, "!%de30\nInvalid command character \"%c\".\n", entryNumber, buffer[0]);
+            write(snew, response, strlen(response));
+            continue;
         }
 
-        bzero(buffer, BUFF_SIZE);
     }
 
     close(snew);
@@ -230,7 +266,7 @@ int main(int argc, char* argv[])
         for (int i=0; i < atoi(MAX_ENTRIES); i++) {
             whiteboard[i] = malloc(ENTRY_SIZE);
             bzero(whiteboard[i], ENTRY_SIZE);
-            strcpy(whiteboard[i], "!12e0\n\n");
+            strcpy(whiteboard[i], "!12p0\n\n");
             pthread_mutex_init(&(mutex[i]), NULL);
         }
     }
