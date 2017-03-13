@@ -171,6 +171,10 @@ int main(int argc, char* argv[])
 	}
 
 	bytes_read = read (s, s_buff, BUFF_SIZE-1);
+	if (bytes_read == 0) {
+		printf("Connection lost\n");
+		exit(1);
+	}
 	s_buff[strlen(s_buff)-1] = ' ';
 
 	fprintf (stderr, "Welcome to %sentry whiteboard.\n\n", s_buff);
@@ -205,19 +209,6 @@ int main(int argc, char* argv[])
 
 
 	while (1) {
-		//fprintf (stderr, "Cmd::");
-		//fgets(in_buff, BUFF_SIZE, stdin);
-		//for (int i=0; i<BUFF_SIZE; i++) {
-		//	if (in_buff[i] == 'z') {
-		//		in_buff[i] = '\n';
-		//	}
-		//}
-		//bytes_written = write(s, to_send, strlen(to_send)-1);
-		//bzero(to_send, BUFF_SIZE);
-
-		//bzero(s_buff, BUFF_SIZE);
-		//read(s, s_buff, BUFF_SIZE);
-		//fprintf(stderr, "Response from server:\"%s\"\n", s_buff);
 		bzero(inbuff, sizeof inbuff);
 		printf("\nWould you like to query, update or clean an entry or exit? (q/u/c/e): ");
 		fgets(inbuff, 200, stdin);
@@ -301,7 +292,11 @@ int main(int argc, char* argv[])
 			bytes_written = write(s, to_send, strlen(to_send)-1);
 			//bytes_written = write(s, to_send, BUFF_SIZE);
 			bzero(to_send, BUFF_SIZE);
-			read(s, response, BUFF_SIZE);
+			bytes_read = read(s, response, BUFF_SIZE);
+			if (bytes_read == 0) {
+				printf("Connection lost\n");
+				break;
+			}
 			//fprintf(stderr, "Response from server:\"%s\"\n", response);
 			
 			
@@ -420,7 +415,11 @@ int main(int argc, char* argv[])
 			bytes_written = write(s, to_send, strlen(to_send)-1);
 			bzero(to_send, BUFF_SIZE);
 			bzero(response, BUFF_SIZE);
-			read(s, response, BUFF_SIZE);
+			bytes_read = read(s, response, BUFF_SIZE);
+			if (bytes_read == 0) {
+				printf("Connection lost\n");
+				break;
+			}
 			
 			
 
@@ -585,7 +584,11 @@ int main(int argc, char* argv[])
 			//printf("SENDING %s", to_send);
 			bytes_written = write(s, to_send, strlen(to_send)-1);
 			bzero(to_send, BUFF_SIZE);
-			read(s, response, BUFF_SIZE);
+			bytes_read = read(s, response, BUFF_SIZE);
+			if (bytes_read == 0) {
+				printf("Connection lost\n");
+				break;
+			}
 			//fprintf(stderr, "Response from server:\"%s\"\n", response);
 			
 			//COULD RECEIVE ONE OF TWO THINGS:
