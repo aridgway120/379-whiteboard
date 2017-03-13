@@ -13,21 +13,21 @@ Student's Server / TA's Client (30):       26
         Multiple connections (clients) w/
         reasonable performance (12)        10
 
-Student's Server / Student's Client (30):
-        Starting with statefile (4)
-        Starting with TA's statefile (4)
-        Starting with number of entries (2)                 2
-        Mutual exclusion / Concurrency control (6)
-        Exit gracefully (writing to whiteboard file) (4)
-        Meaningful error messages (2)                       2
-        Encryption/Decryption (4)
+Student's Server / Student's Client (30):		       24
+        Starting with statefile (4)		                4
+        Starting with TA's statefile (4)			3
+        Starting with number of entries (2)                     2
+        Mutual exclusion / Concurrency control (6)		6
+        Exit gracefully (writing to whiteboard file) (4)	4
+        Meaningful error messages (2)                           2
+        Encryption/Decryption (4)				0
         Multiple connections (clients) w/
-        reasonable performance (4)                          3
+        reasonable performance (4)                              3
 
 Code Quality (20):
-        Modularity & Readability (4)
+        Modularity & Readability (4)            3
         Daemonizing server process (4)          0
         Efficiency -- as understood from
-        tests and code inspection (4)
-        Reasonable client interface (4)
-        Readme file (4)
+        tests and code inspection (4)           2
+        Reasonable client interface (4)         4
+        Readme file (4)                         
