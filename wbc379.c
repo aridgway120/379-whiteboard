@@ -115,7 +115,7 @@ int main(int argc, char* argv[])
 {
 	
 	if (argc >= 4) {
-		perror ("No keyfile support available\n");
+		printf("No keyfile support available, we didn't make it that far..\n");
 		exit (1);
 	}
 	char hostname[99];
