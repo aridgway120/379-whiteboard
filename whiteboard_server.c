@@ -158,7 +158,7 @@ int clientHandler(void * arg)
             pthread_mutex_lock( &(mutex[entryIndex]) );
             strcpy(response, whiteboard[entryIndex]);
             pthread_mutex_unlock( &(mutex[entryIndex]) );
-=
+
             write(snew, response, strlen(response));
 
         }
