@@ -8,14 +8,14 @@
 #include <string.h>
 #include <ctype.h>
 
-#define	 MY_PORT  1112
+#define	 MY_PORT  1121
 
 #define MORE_TEXT 1
 #define DONE 0
 
 
 #define BUFF_SIZE 1050
-
+//client can't detect when the server connection has terminated
 
 /* ---------------------------------------------------------------------
  This is a sample client program for the number server. The client and
@@ -159,13 +159,13 @@ int main()
 		//bzero(s_buff, BUFF_SIZE);
 		//read(s, s_buff, BUFF_SIZE);
 		//fprintf(stderr, "Response from server:\"%s\"\n", s_buff);
-		
+		bzero(inbuff, sizeof inbuff);
 		printf("\nWould you like to query, update or clean an entry or exit? (q/u/c/e): ");
 		fgets(inbuff, 200, stdin);
 		
 		rc = sscanf(inbuff, "%c", &Q_or_U_or_C);
-		printf("Received %c.\n", Q_or_U_or_C);
-		if (rc != 1 || (strcmp(&Q_or_U_or_C, "e") != 0 && strcmp(&Q_or_U_or_C, "E") != 0 && strcmp(&Q_or_U_or_C, "q") != 0 && strcmp(&Q_or_U_or_C, "Q") != 0 && strcmp(&Q_or_U_or_C, "u") != 0 && strcmp(&Q_or_U_or_C, "U") != 0 && strcmp(&Q_or_U_or_C, "c") != 0  && strcmp(&Q_or_U_or_C, "C") != 0)) { //if it didn't get any input
+
+		if (rc != 1 || (Q_or_U_or_C != 'e' && Q_or_U_or_C != 'E' && Q_or_U_or_C != 'q' && Q_or_U_or_C != 'Q' && Q_or_U_or_C != 'u' && Q_or_U_or_C != 'U' && Q_or_U_or_C != 'c'  && Q_or_U_or_C != 'C' )) { //if it didn't get any input
 			fprintf(stderr, "Incorrect entry for querying, updating or clearing an entry or exiting.\n");
 			
 			if (feof(stdin)) { //if there's still elements in stdin that need to be read
@@ -183,7 +183,7 @@ int main()
 		
 		
 		
-		if (strcmp(&Q_or_U_or_C, "e") == 0 || strcmp(&Q_or_U_or_C, "E") == 0) {
+		if (Q_or_U_or_C == 'e' || Q_or_U_or_C == 'E') {
 		//EXITING
 			printf("Exiting...\n");
 			break;
@@ -192,7 +192,7 @@ int main()
 		
 		
 		
-		if (strcmp(&Q_or_U_or_C, "c") == 0 || strcmp(&Q_or_U_or_C, "C") == 0) {
+		if (Q_or_U_or_C == 'c' || Q_or_U_or_C == 'C') {
 		//CLEANING
 			token = '@';
 			
@@ -242,9 +242,10 @@ int main()
 			sprintf(to_send, "%c%lld%c%d%c%c", token, num_entry, 'p', 0, newline, newline);
 			printf("SENDING %s", to_send);
 			bytes_written = write(s, to_send, strlen(to_send)-1);
+			//bytes_written = write(s, to_send, BUFF_SIZE);
 			bzero(to_send, BUFF_SIZE);
 			read(s, response, BUFF_SIZE);
-			fprintf(stderr, "Response from server:\"%s\"\n", s_buff);
+			fprintf(stderr, "Response from server:\"%s\"\n", response);
 		}
 			
 			
@@ -272,7 +273,7 @@ int main()
 		
 		
 		
-		if (strcmp(&Q_or_U_or_C, "q") == 0 || strcmp(&Q_or_U_or_C, "Q") == 0) {
+		if (Q_or_U_or_C == 'q'  || Q_or_U_or_C == 'Q') {
 			//QUERYING
 			token = '?';
 			
@@ -329,7 +330,7 @@ int main()
 			bytes_written = write(s, to_send, strlen(to_send)-1);
 			bzero(to_send, BUFF_SIZE);
 			read(s, response, BUFF_SIZE);
-			fprintf(stderr, "Response from server:\"%s\"\n", s_buff);
+			fprintf(stderr, "Response from server:\"%s\"\n", response);
 		}
 		
 		
@@ -341,7 +342,7 @@ int main()
 		
 		
 		
-		else if (strcmp(&Q_or_U_or_C,"u") == 0 || strcmp(&Q_or_U_or_C, "U") == 0) {
+		else if (Q_or_U_or_C == 'u' || Q_or_U_or_C == 'U') {
 			//UPDATING
 			
 			token = '@';
@@ -438,7 +439,7 @@ int main()
 			bytes_written = write(s, to_send, strlen(to_send)-1);
 			bzero(to_send, BUFF_SIZE);
 			read(s, response, BUFF_SIZE);
-			fprintf(stderr, "Response from server:\"%s\"\n", s_buff);
+			fprintf(stderr, "Response from server:\"%s\"\n", response);
 			
 		}
 		
@@ -452,7 +453,7 @@ int main()
 		
 		
 	}
-
+	fprintf(stderr, "Exiting...\n");
 	close (s);
 	return 0;
 }
