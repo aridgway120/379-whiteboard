@@ -7,6 +7,7 @@
 #include <fcntl.h>
 #include <math.h>
 #include <pthread.h>
+#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -238,8 +239,38 @@ void * clientHandler(void * arg)
     return (void *) 0;
 }
 
+void orderly_exit()
+{
+    FILE *f = fopen("whiteboard.all", "w");
+    for (int i=0; i<atoi(MAX_ENTRIES); i++) {
+        fprintf(f, "%s", whiteboard[i]);
+    }
+    fclose(f);
+    fprintf(stderr, "Whiteboard successfully saved.\n");
+    exit(0);
+}
+
 int main(int argc, char* argv[])
 {
+    // pid_t pid = fork();
+    // if (pid<0) { fprintf(stderr, "Failed to fork.\n"); exit(1); }
+    // printf("pid of server daemon %d\n", pid);
+    fprintf(stderr, "Server PID: %ld\n", (long int)getpid());
+    // exit(0);
+    // umask(0);
+    // pid_t sid = setsid();
+    // if (sid<0) { fprintf(stderr, "Failed to obtain sid.\n"); exit(2); }
+    // close(STDIN_FILENO);////
+    // close(STDOUT_FILENO);
+    // close(STDERR_FILENO);
+
+    struct sigaction act;
+    act.sa_handler = orderly_exit;
+    sigemptyset(&act.sa_mask);
+    sigaction(SIGTERM, &act, 0);
+    sigaction(SIGINT, &act, 0);
+
+
     int PORT_NO = 0000;
 
     if (argc > ARG_NO) {
@@ -330,10 +361,11 @@ int main(int argc, char* argv[])
             fprintf(stderr, "Client diverted to socket %d.\n", ind);
             pthread_create(&(threads[t_ind]), NULL, clientHandler, (void *) &(snew[ind]) );
             t_ind++;
-            // if (t_ind >= sizeof(*threads)/sizeof(pthread_t)) {
-            //     threads = realloc(threads, sizeof(*threads) + 100*sizeof(pthread_t));
-            // }
-            //clientHandler((void*) &(snew[ind]));
+            if (t_ind%100 == 0 ) {
+                fprintf(stderr, "Resizing\n");
+                threads = realloc(threads, sizeof(threads) + 100*sizeof(pthread_t));
+            }
+            ////clientHandler((void*) &(snew[ind]));
             ind++;
             if (ind >= N_SOCKS) { ind -= N_SOCKS; }
         }
