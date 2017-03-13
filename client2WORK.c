@@ -21,7 +21,9 @@
  This is a sample client program for the number server. The client and
  the server need not run on the same machine.
  --------------------------------------------------------------------- */
-
+//compile with gcc -o client client2WORK.c
+//run with ./client
+//runs on port 1112
 
 void strreplace(char *src, char *str, char *rep)
 //http://stackoverflow.com/questions/3659694/how-to-replace-substring-in-c
